@@ -1,0 +1,14 @@
+{
+  "name": "ตาชั่งสั่น",
+  "short_name": "ตาชั่งสั่น",
+  "description": "ประมาณน้ำหนักของเล็กๆ ด้วยมอเตอร์สั่นและเซนเซอร์ในมือถือ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
