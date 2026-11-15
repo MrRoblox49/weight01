@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>ตาชั่งสั่น</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#f4f6fa;--card:#ffffff;--text:#0f172a;--muted:#64748b;--accent:#2563eb;--accent-text:#ffffff;
+  --ok:#16a34a;--warn:#d97706;--bad:#dc2626;--line:#e2e8f0;--chip:#eef2f7;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0b1020;--card:#151b2e;--text:#e5e7eb;--muted:#94a3b8;--accent:#60a5fa;--accent-text:#0b1020;
+    --ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--line:#263049;--chip:#1e263c;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Thai","Hiragino Sans",sans-serif;
+  font-size:16px;line-height:1.5}
+body{padding:0 16px calc(84px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+header{padding:calc(16px + env(safe-area-inset-top)) 0 8px}
+h1{font-size:22px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.card h2{font-size:15px;margin:0 0 8px}
+.muted{color:var(--muted);font-size:13px}
+.tab{display:none}.tab.on{display:block}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;color:var(--text);background:var(--chip)}
+button:disabled{opacity:.5;cursor:default}
+button.primary{background:var(--accent);color:var(--accent-text);font-weight:600}
+button.danger{background:transparent;color:var(--bad);padding:6px 10px}
+button.full{width:100%}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom));gap:6px;max-width:520px;margin:0 auto}
+nav button{flex:1;background:transparent;padding:8px 4px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button .ic{font-size:20px;line-height:1}
+nav button.on{color:var(--accent);font-weight:600}
+ul.check{list-style:none;margin:0;padding:0}
+ul.check li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+ul.check li:last-child{border-bottom:0}
+.s-ok{color:var(--ok)}.s-bad{color:var(--bad)}.s-wait{color:var(--muted)}
+canvas{width:100%;height:150px;display:block;border-radius:10px;background:var(--chip)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{padding:8px 12px;border-radius:999px;background:var(--chip);font-size:14px}
+.chip.sel{outline:2px solid var(--accent);font-weight:600}
+.chip.done::after{content:" ✓";color:var(--ok)}
+.row{display:flex;gap:8px;align-items:center}
+input[type=number]{font:inherit;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500;font-size:12px}
+.status{min-height:22px;font-size:14px;margin-top:10px}
+.status.err{color:var(--bad)}.status.busy{color:var(--accent)}
+.big{font-size:64px;font-weight:700;text-align:center;line-height:1.1;margin:8px 0 0;font-variant-numeric:tabular-nums}
+.bigunit{text-align:center;color:var(--muted);margin-bottom:4px}
+.range{text-align:center;font-size:15px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:var(--chip);margin-top:8px}
+.weighbtn{height:84px;font-size:20px;margin-top:12px}
+ol.steps{padding-left:20px;margin:6px 0;font-size:14px}
+ol.steps li{margin:4px 0}
+.center{text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ตาชั่งสั่น</h1>
+  <p class="sub">ประมาณน้ำหนักของเล็กๆ ด้วยมอเตอร์สั่นและเซนเซอร์ในมือถือ (Android + Chrome)</p>
+</header>
+
+<!-- ===== ตรวจเครื่อง ===== -->
+<section id="tab-check" class="tab">
+  <div class="card">
+    <h2>1) ตรวจว่าเครื่องนี้ใช้ได้ไหม</h2>
+    <ul class="check">
+      <li><span>เชื่อมต่อแบบ HTTPS</span><span id="chkHttps" class="s-wait">…</span></li>
+      <li><span>สั่นเครื่องจากเว็บได้</span><span id="chkVib" class="s-wait">…</span></li>
+      <li><span>เซนเซอร์ความเร่ง</span><span id="chkMotion" class="s-wait">ยังไม่ตรวจ</span></li>
+    </ul>
+    <button id="btnCheck" class="primary full" style="margin-top:12px">เริ่มตรวจเซนเซอร์</button>
+  </div>
+
+  <div class="card">
+    <h2>สัญญาณความเร่งสด</h2>
+    <canvas id="live"></canvas>
+    <p class="muted">แตะโต๊ะเบาๆ แล้วดูว่ากราฟกระเพื่อมไหม</p>
+  </div>
+
+  <div class="card">
+    <h2>2) ทดสอบสั่น</h2>
+    <p class="muted">วางมือถือหงายจอบนโต๊ะแข็งๆ (ไม่ต้องวางของ) แล้วกดปุ่ม เครื่องจะสั่นประมาณ 8 วินาที</p>
+    <button id="btnTestVib" class="act full">ทดสอบสั่น</button>
+    <div id="testStatus" class="status"></div>
+  </div>
+</section>
+
+<!-- ===== คาลิเบรต ===== -->
+<section id="tab-cal" class="tab">
+  <div class="card">
+    <h2>คาลิเบรต: สอนแอปด้วยของที่รู้น้ำหนัก</h2>
+    <ol class="steps">
+      <li>วางมือถือหงายจอบนโต๊ะแข็งเรียบ ถอดเคสออก</li>
+      <li>เลือกน้ำหนักด้านล่าง แล้ววางของที่น้ำหนักนั้นตรงกึ่งกลางหน้าจอ (รองด้วยกระดาษแผ่นเล็กกันหน้าจอรับสัมผัสผิด)</li>
+      <li>กด "วัด" แล้วอย่าแตะเครื่อง (ใช้เวลาประมาณ 8 วินาที)</li>
+      <li>ทำให้ครบอย่างน้อย 3 น้ำหนัก แนะนำ 0, 20, 50, 100 g</li>
+    </ol>
+    <p class="muted">เคล็ดลับ: เหรียญ 1 เยน 1 เหรียญหนัก 1 กรัม ใช้กองเหรียญเป็นตุ้มน้ำหนักได้ (10 เหรียญ = 10 g) ควรกองให้เป็นก้อนเดียวและวางตำแหน่งเดิมทุกครั้ง</p>
+  </div>
+
+  <div class="card">
+    <h2>เลือกน้ำหนักที่จะวัด</h2>
+    <div id="chips" class="chips"></div>
+    <div class="row">
+      <input id="customMass" type="number" inputmode="decimal" min="0" step="1" placeholder="หรือพิมพ์น้ำหนักเอง (g)">
+    </div>
+    <button id="btnCal" class="primary act full" style="margin-top:12px">วัดที่ 0 g</button>
+    <div id="calStatus" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>ผลคาลิเบรต</h2>
+    <div id="fitSummary" class="muted">ยังไม่มีข้อมูล</div>
+    <canvas id="calChart" style="margin-top:10px"></canvas>
+    <table style="margin-top:10px">
+      <thead><tr><th>น้ำหนัก (g)</th><th>แอมพลิจูด</th><th>นิ่งแค่ไหน</th><th></th></tr></thead>
+      <tbody id="pointRows"></tbody>
+    </table>
+    <button id="btnReset" class="danger" style="margin-top:8px">ลบข้อมูลคาลิเบรตทั้งหมด</button>
+  </div>
+</section>
+
+<!-- ===== ชั่ง ===== -->
+<section id="tab-weigh" class="tab">
+  <div class="card">
+    <div id="weighNeed" class="muted" style="display:none"></div>
+    <div id="bigVal" class="big">–</div>
+    <div class="bigunit">กรัม (ประมาณ)</div>
+    <div id="rangeTxt" class="range muted"></div>
+    <div class="center"><span id="qualBadge" class="badge" style="display:none"></span></div>
+    <button id="btnWeigh" class="primary act full weighbtn">ชั่ง</button>
+    <div id="weighStatus" class="status"></div>
+    <p class="muted">วางมือถือหงายจอบนโต๊ะเดิม แล้ววางของที่ตำแหน่งเดียวกับตอนคาลิเบรต</p>
+  </div>
+</section>
+
+<nav>
+  <button data-tab="check"><span class="ic">🩺</span>ตรวจเครื่อง</button>
+  <button data-tab="cal"><span class="ic">🎯</span>คาลิเบรต</button>
+  <button data-tab="weigh"><span class="ic">⚖️</span>ชั่ง</button>
+</nav>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const STORE = "vibescale.v1";
+const PRESETS = [0, 10, 20, 50, 100, 150];
+const REPS = 3;
+
+/* ---------- state ---------- */
+let state = { points: [] };
+try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && Array.isArray(s.points)) state = s; } catch (e) {}
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+
+let selMass = 0;
+let activeTab = "check";
+let busy = false;
+
+/* ---------- motion sensor ---------- */
+let listening = false, lastSampleAt = 0, recording = false, samples = [];
+const rateBuf = [];
+const liveBuf = [];
+let ema = null;
+
+function onMotion(e) {
+  const a = e.accelerationIncludingGravity;
+  if (!a || a.x == null) return;
+  const t = performance.now();
+  lastSampleAt = t;
+  rateBuf.push(t);
+  while (rateBuf.length && t - rateBuf[0] > 1000) rateBuf.shift();
+  const mag = Math.hypot(a.x, a.y, a.z);
+  ema = ema == null ? mag : ema + 0.05 * (mag - ema);
+  liveBuf.push({ t, v: mag - ema });
+  while (liveBuf.length && t - liveBuf[0].t > 4000) liveBuf.shift();
+  if (recording) samples.push({ x: a.x, y: a.y, z: a.z });
+}
+
+async function ensureMotion() {
+  if (typeof DeviceMotionEvent === "undefined") throw new Error("เบราว์เซอร์นี้ไม่มีเซนเซอร์ความเร่ง");
+  if (!listening) {
+    if (typeof DeviceMotionEvent.requestPermission === "function") {
+      const r = await DeviceMotionEvent.requestPermission();
+      if (r !== "granted") throw new Error("ไม่ได้รับอนุญาตให้ใช้เซนเซอร์");
+    }
+    window.addEventListener("devicemotion", onMotion);
+    listening = true;
+  }
+  const t0 = performance.now();
+  while (performance.now() - lastSampleAt > 800) {
+    if (performance.now() - t0 > 1500) throw new Error("ไม่ได้รับข้อมูลเซนเซอร์ (บนคอมพิวเตอร์จะไม่มีข้อมูลนี้)");
+    await sleep(100);
+  }
+}
+
+async function record(ms) {
+  samples = [];
+  recording = true;
+  await sleep(ms);
+  recording = false;
+  return samples;
+}
+
+function analyze(arr) {
+  const n = arr.length;
+  if (n < 20) return null;
+  let mx = 0, my = 0, mz = 0;
+  for (const s of arr) { mx += s.x; my += s.y; mz += s.z; }
+  mx /= n; my /= n; mz /= n;
+  let p = 0;
+  for (const s of arr) p += (s.x - mx) ** 2 + (s.y - my) ** 2 + (s.z - mz) ** 2;
+  return { power: p / n, n };
+}
+
+function median(a) {
+  const s = [...a].sort((x, y) => x - y), n = s.length;
+  return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+}
+
+function needVibrate() {
+  if (!("vibrate" in navigator)) {
+    throw new Error("เครื่อง/เบราว์เซอร์นี้สั่นจากเว็บไม่ได้ (iPhone ใช้ไม่ได้) ลองใช้ Chrome บน Android");
+  }
+}
+
+async function measureOnce() {
+  const base = analyze(await record(700));
+  if (!base) throw new Error("ไม่ได้รับข้อมูลเซนเซอร์");
+  if (Math.sqrt(base.power) > 0.3) throw new Error("โต๊ะหรือเครื่องไม่นิ่ง ลองวางใหม่แล้วรอสักครู่");
+  navigator.vibrate(2000);
+  await sleep(600);
+  const vib = analyze(await record(1200));
+  navigator.vibrate(0);
+  await sleep(500);
+  if (!vib) throw new Error("ไม่ได้รับข้อมูลเซนเซอร์ระหว่างสั่น");
+  const A = Math.sqrt(Math.max(0, vib.power - base.power));
+  if (A < 0.05) throw new Error("เซนเซอร์แทบไม่เห็นการสั่น (ตรวจว่าเปิดโหมดสั่นของเครื่อง และไม่ได้เปิดโหมดเงียบที่ปิดการสั่น)");
+  return A;
+}
+
+async function measure(reps, onProg) {
+  needVibrate();
+  await ensureMotion();
+  const As = [];
+  for (let i = 0; i < reps; i++) {
+    if (onProg) onProg(i + 1, reps);
+    As.push(await measureOnce());
+  }
+  const A = median(As);
+  const spread = (Math.max(...As) - Math.min(...As)) / A;
+  return { A, spread, As };
+}
+
+/* ---------- model: m = c0 + c1*A หรือ m = c0 + c1/A (ใช้ได้ทั้งกรณีแอมพลิจูดเพิ่มหรือลดตามน้ำหนัก) ---------- */
+function linfit(xs, ys) {
+  const n = xs.length;
+  const xb = xs.reduce((s, v) => s + v, 0) / n, yb = ys.reduce((s, v) => s + v, 0) / n;
+  let sxx = 0, sxy = 0, syy = 0;
+  for (let i = 0; i < n; i++) {
+    sxx += (xs[i] - xb) ** 2; sxy += (xs[i] - xb) * (ys[i] - yb); syy += (ys[i] - yb) ** 2;
+  }
+  if (!(sxx > 0) || !(syy > 0)) return null;
+  const c1 = sxy / sxx, c0 = yb - c1 * xb;
+  let se = 0;
+  for (let i = 0; i < n; i++) se += (ys[i] - (c0 + c1 * xs[i])) ** 2;
+  return { c0, c1, rmse: Math.sqrt(se / n), r2: (sxy * sxy) / (sxx * syy) };
+}
+
+/* ลองสองแบบ: m เป็นเส้นตรงของ A หรือของ 1/A แล้วเลือกแบบที่ผิดพลาดน้อยกว่า */
+function fit(points) {
+  const pts = points.filter(p => p.A > 0);
+  if (new Set(pts.map(p => p.m)).size < 3) return null;
+  const ys = pts.map(p => p.m);
+  const lin = linfit(pts.map(p => p.A), ys);
+  const rec = linfit(pts.map(p => 1 / p.A), ys);
+  const cands = [lin && { ...lin, inv: false }, rec && { ...rec, inv: true }].filter(Boolean);
+  if (!cands.length) return { invalid: true, r2: 0 };
+  const best = cands.reduce((a, b) => (b.rmse < a.rmse ? b : a));
+  if (best.r2 < 0.6) return { invalid: true, r2: best.r2 };
+  const sorted = [...pts].sort((p, q) => p.m - q.m);
+  let up = 0, dn = 0;
+  for (let i = 1; i < sorted.length; i++) { if (sorted[i].A > sorted[i - 1].A) up++; else dn++; }
+  return { ...best, maxM: Math.max(...ys), mono: up === 0 || dn === 0 };
+}
+function predictM(f, A) { return f.c0 + f.c1 * (f.inv ? 1 / A : A); }
+
+/* ---------- UI helpers ---------- */
+function say(el, text, cls) { el.textContent = text || ""; el.className = "status" + (cls ? " " + cls : ""); }
+function setCheck(id, ok, detail) {
+  const el = $("#" + id);
+  el.className = ok ? "s-ok" : "s-bad";
+  el.textContent = (ok ? "✓ " : "✗ ") + (detail || (ok ? "ใช้ได้" : "ใช้ไม่ได้"));
+}
+let wl = null;
+async function lockScreen() { try { wl = await navigator.wakeLock.request("screen"); } catch (e) {} }
+function unlockScreen() { try { wl && wl.release(); } catch (e) {} wl = null; }
+
+async function run(statusEl, fn) {
+  if (busy) return;
+  busy = true;
+  document.querySelectorAll(".act").forEach(b => b.disabled = true);
+  await lockScreen();
+  try { await fn(); }
+  catch (e) { say(statusEl, e.message || String(e), "err"); }
+  finally {
+    unlockScreen();
+    busy = false;
+    document.querySelectorAll(".act").forEach(b => b.disabled = false);
+  }
+}
+
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function prepCanvas(c) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  if (c.width !== w * dpr || c.height !== h * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  const g = c.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  return { g, w, h };
+}
+
+/* ---------- tabs ---------- */
+function showTab(name) {
+  activeTab = name;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.id === "tab-" + name));
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+  if (name === "cal") renderCal();
+  if (name === "weigh") renderWeigh();
+  if (name === "check") requestAnimationFrame(drawLive);
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+/* ---------- check tab ---------- */
+setCheck("chkHttps", window.isSecureContext, window.isSecureContext ? "ใช้ได้" : "ต้องเปิดผ่าน https://");
+setCheck("chkVib", "vibrate" in navigator, "vibrate" in navigator ? "ใช้ได้" : "ไม่รองรับ (iPhone ใช้ไม่ได้)");
+
+$("#btnCheck").addEventListener("click", async () => {
+  try {
+    await ensureMotion();
+    await sleep(600);
+    setCheck("chkMotion", true, `ใช้ได้ (~${rateBuf.length} Hz)`);
+  } catch (e) { setCheck("chkMotion", false, e.message); }
+});
+
+function drawLive() {
+  if (activeTab !== "check") return;
+  const { g, w, h } = prepCanvas($("#live"));
+  const data = liveBuf;
+  g.strokeStyle = cssVar("--line"); g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+  if (data.length > 2) {
+    let mx = 0.5;
+    for (const d of data) mx = Math.max(mx, Math.abs(d.v));
+    const t1 = data[data.length - 1].t;
+    g.strokeStyle = cssVar("--accent"); g.lineWidth = 1.5; g.beginPath();
+    data.forEach((d, i) => {
+      const x = w - ((t1 - d.t) / 4000) * w, y = h / 2 - (d.v / mx) * (h / 2 - 8);
+      i ? g.lineTo(x, y) : g.moveTo(x, y);
+    });
+    g.stroke();
+  }
+  requestAnimationFrame(drawLive);
+}
+
+$("#btnTestVib").addEventListener("click", () => {
+  const el = $("#testStatus");
+  run(el, async () => {
+    say(el, "กำลังสั่นทดสอบ… อย่าแตะเครื่อง", "busy");
+    const r = await measure(REPS, (i, n) => say(el, `วัดรอบ ${i}/${n}… อย่าแตะเครื่อง`, "busy"));
+    const ok = r.A > 0.3;
+    say(el, `แอมพลิจูดการสั่นที่เซนเซอร์อ่านได้ ≈ ${r.A.toFixed(2)} m/s² (ความนิ่งระหว่างรอบ ${(r.spread * 100).toFixed(0)}%)\n` +
+      (ok ? "✓ เซนเซอร์เห็นการสั่นชัดเจน ไปคาลิเบรตต่อได้" : "⚠ สัญญาณอ่อน อาจแม่นยำต่ำ ลองถอดเคสหรือเปลี่ยนโต๊ะ"), ok ? "" : "err");
+    $("#testStatus").style.whiteSpace = "pre-line";
+  });
+});
+
+/* ---------- calibrate tab ---------- */
+function renderChips() {
+  const box = $("#chips");
+  box.innerHTML = "";
+  const done = new Set(state.points.map(p => p.m));
+  const list = [...new Set([...PRESETS, ...state.points.map(p => p.m)])].sort((a, b) => a - b);
+  for (const m of list) {
+    const c = document.createElement("button");
+    c.className = "chip" + (m === selMass ? " sel" : "") + (done.has(m) ? " done" : "");
+    c.textContent = m + " g";
+    c.addEventListener("click", () => { selMass = m; $("#customMass").value = ""; renderChips(); updateCalBtn(); });
+    box.appendChild(c);
+  }
+}
+function updateCalBtn() { $("#btnCal").textContent = `วัดที่ ${selMass} g`; }
+
+$("#customMass").addEventListener("input", e => {
+  const v = parseFloat(e.target.value);
+  if (isFinite(v) && v >= 0) { selMass = v; renderChips(); updateCalBtn(); }
+});
+
+function renderCal() {
+  renderChips(); updateCalBtn();
+  const rows = $("#pointRows");
+  rows.innerHTML = "";
+  [...state.points].sort((a, b) => a.m - b.m).forEach(p => {
+    const tr = document.createElement("tr");
+    const q = p.spread < 0.05 ? "ดี" : p.spread < 0.12 ? "พอใช้" : "แกว่ง";
+    tr.innerHTML = `<td>${p.m}</td><td>${p.A.toFixed(2)}</td><td>${q} (${(p.spread * 100).toFixed(0)}%)</td><td></td>`;
+    const del = document.createElement("button");
+    del.className = "danger"; del.textContent = "ลบ";
+    del.addEventListener("click", () => { state.points = state.points.filter(x => x.m !== p.m); save(); renderCal(); });
+    tr.lastChild.appendChild(del);
+    rows.appendChild(tr);
+  });
+
+  const f = fit(state.points), el = $("#fitSummary");
+  if (!state.points.length) el.textContent = "ยังไม่มีข้อมูล";
+  else if (!f) el.textContent = `มี ${state.points.length} จุด ต้องมีอย่างน้อย 3 น้ำหนักที่ต่างกัน (แนะนำ 0, 20, 50, 100 g)`;
+  else if (f.invalid) el.innerHTML = `<span class="s-bad">แอมพลิจูดไม่สัมพันธ์กับน้ำหนักชัดเจน (R² ต่ำ) วิธีนี้อาจใช้ไม่ได้กับเครื่อง/โต๊ะนี้ ลองถอดเคส เปลี่ยนโต๊ะ หรือวัดจุดที่แกว่งซ้ำ</span>`;
+  else {
+    const dirTxt = (f.c1 > 0) !== f.inv ? "เพิ่มขึ้น" : "ลดลง";
+    el.innerHTML = `ความคลาดเคลื่อนเฉลี่ยของการคาลิเบรต (RMSE): <b>${f.rmse.toFixed(1)} g</b><br>` +
+      `แอมพลิจูด${dirTxt}เมื่อน้ำหนักเพิ่ม · R² = ${f.r2.toFixed(3)}<br>` +
+      (f.mono ? "" : `<span class="s-bad">⚠ ค่าขึ้นลงไม่สม่ำเสมอตามน้ำหนัก ลองวัดจุดที่แกว่งซ้ำหรือตัดจุดที่ผิดปกติ</span><br>`) +
+      `<span class="muted">ตัวเลขนี้คือความแม่นยำจริงของเครื่องคุณ (วัดกับจุดที่ใช้คาลิเบรตเอง จึงมักดีกว่าตอนใช้งานจริงเล็กน้อย)</span>`;
+  }
+  drawCalChart(f);
+}
+
+function drawCalChart(f) {
+  const { g, w, h } = prepCanvas($("#calChart"));
+  const pts = state.points;
+  if (!pts.length) return;
+  const pad = 28;
+  const maxM = Math.max(10, ...pts.map(p => p.m)) * 1.1;
+  const maxA = Math.max(...pts.map(p => p.A)) * 1.15;
+  const X = m => pad + (m / maxM) * (w - pad - 8), Y = a => h - pad - (a / maxA) * (h - pad - 8);
+  g.strokeStyle = cssVar("--line"); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(pad, 8); g.lineTo(pad, h - pad); g.lineTo(w - 8, h - pad); g.stroke();
+  g.fillStyle = cssVar("--muted"); g.font = "11px sans-serif";
+  g.fillText("แอมพลิจูด", 4, 12); g.fillText("น้ำหนัก (g)", w - 70, h - 8);
+  if (f && !f.invalid) {
+    g.strokeStyle = cssVar("--accent"); g.lineWidth = 2; g.beginPath();
+    let started = false;
+    for (let i = 0; i <= 60; i++) {
+      const m = (i / 60) * maxM, t = (m - f.c0) / f.c1, a = f.inv ? 1 / t : t;
+      if (!isFinite(a) || a <= 0 || a > maxA * 2) { started = false; continue; }
+      started ? g.lineTo(X(m), Y(a)) : g.moveTo(X(m), Y(a));
+      started = true;
+    }
+    g.stroke();
+  }
+  g.fillStyle = cssVar("--text");
+  for (const p of pts) { g.beginPath(); g.arc(X(p.m), Y(p.A), 4, 0, 7); g.fill(); }
+}
+
+$("#btnCal").addEventListener("click", () => {
+  const el = $("#calStatus");
+  run(el, async () => {
+    if (!isFinite(selMass) || selMass < 0) throw new Error("น้ำหนักไม่ถูกต้อง");
+    const m = selMass;
+    say(el, `วางของ ${m} g ที่กึ่งกลางหน้าจอ แล้วอย่าแตะ…`, "busy");
+    const r = await measure(REPS, (i, n) => say(el, `วัดรอบ ${i}/${n}… อย่าแตะเครื่อง`, "busy"));
+    state.points = state.points.filter(p => p.m !== m);
+    state.points.push({ m, A: r.A, spread: r.spread, ts: Date.now() });
+    save(); renderCal();
+    say(el, `บันทึกแล้ว: ${m} g → แอมพลิจูด ${r.A.toFixed(2)} (นิ่ง ${(r.spread * 100).toFixed(0)}%)`);
+  });
+});
+
+$("#btnReset").addEventListener("click", () => {
+  if (confirm("ลบข้อมูลคาลิเบรตทั้งหมด?")) { state.points = []; save(); renderCal(); renderWeigh(); }
+});
+
+/* ---------- weigh tab ---------- */
+function renderWeigh() {
+  const f = fit(state.points), need = $("#weighNeed");
+  if (!f || f.invalid) {
+    need.style.display = "block";
+    need.textContent = f && f.invalid
+      ? "ผลคาลิเบรตยังใช้ไม่ได้ ไปที่แท็บคาลิเบรตเพื่อตรวจสอบ"
+      : "ยังไม่ได้คาลิเบรต ไปที่แท็บ \"คาลิเบรต\" วัดอย่างน้อย 3 น้ำหนักก่อน";
+    $("#btnWeigh").disabled = true;
+  } else {
+    need.style.display = "none";
+    $("#btnWeigh").disabled = false;
+  }
+}
+
+$("#btnWeigh").addEventListener("click", () => {
+  const el = $("#weighStatus");
+  run(el, async () => {
+    const f = fit(state.points);
+    if (!f || f.invalid) throw new Error("ยังไม่ได้คาลิเบรต");
+    say(el, "กำลังชั่ง… อย่าแตะเครื่อง", "busy");
+    const r = await measure(REPS, (i, n) => say(el, `วัดรอบ ${i}/${n}… อย่าแตะเครื่อง`, "busy"));
+    const m = predictM(f, r.A);
+    const Alo = Math.max(r.A * (1 - r.spread / 2), r.A * 0.1), Ahi = r.A * (1 + r.spread / 2);
+    const dm = Math.abs(predictM(f, Ahi) - predictM(f, Alo));
+    const err = Math.sqrt((2 * f.rmse) ** 2 + dm ** 2);
+    const shown = Math.max(0, m);
+    $("#bigVal").textContent = Math.round(shown);
+    $("#rangeTxt").textContent = `น่าจะอยู่ในช่วง ${Math.max(0, Math.round(m - err))} ถึง ${Math.round(m + err)} g`;
+    const badge = $("#qualBadge");
+    badge.style.display = "inline-block";
+    badge.textContent = "ความนิ่งของการวัด: " + (r.spread < 0.05 ? "ดี" : r.spread < 0.12 ? "พอใช้" : "แกว่งมาก");
+    let msg = "";
+    if (m > f.maxM * 1.2) msg = "⚠ หนักกว่าช่วงที่คาลิเบรต ค่าอาจไม่น่าเชื่อถือ";
+    else if (m < -5) msg = "⚠ ค่าต่ำกว่า 0 ผิดปกติ ตรวจตำแหน่งวางหรือคาลิเบรตใหม่";
+    say(el, msg, msg ? "err" : "");
+  });
+});
+
+/* ---------- init ---------- */
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+const f0 = fit(state.points);
+showTab(f0 && !f0.invalid ? "weigh" : "check");
+window.addEventListener("resize", () => { if (activeTab === "cal") renderCal(); });
+</script>
+</body>
+</html>
